@@ -28,18 +28,64 @@ module Drawr
       end
       @div = 'plotr'
     end
+
+    def write_to_div(div)
+      @div = div
+      to_s
+    end
+
+    def write(file); File.open(file, 'wb') { |f| f.write to_s }; end
+
+    def to_s
+      <<END
+      <div><canvas id="#{div}" height="#{@height.to_i}" width="#{@width.to_i}"></canvas></div>
+      <script>#{dataset}\n#{options}\n#{commands}</script>
+END
+    end
+  end
+
+  class Pie < Base
+    def data(name, data_points = [], color = nil)
+      @labels ||= {}
+      @labels[@labels.length] = name
+      super(name, data_points, color)
+    end
+
+    protected
+    def options
+      <<END
+  var options = {
+      strokewidth: 1,
+      backgroundColor: '#{@theme[:background_color]}',
+      colorScheme: '#{@theme[:color_scheme]}',
+      xTicks: [
+      #{labels.keys.sort.map { |k|
+        "{v:#{k}, label:'#{labels[k]}'}"
+      }.join(",\n")}
+      ]
+};
+END
+    end
+
+    def commands
+      "var pie = new Plotr.PieChart('#{div}', options);\n" +
+      "pie.addDataset(dataset);\npie.render();\n"
+    end
+
+    def dataset
+      <<END
+  var dataset = {
+      '#{title}': [#{@labels.map { |k,v| "[#{k}, #{@data_points[v].first}]"
+      }.join(', ')}]
+  };
+END
+    end
   end
 
   class Line < Base
-    def to_s
-      dataset =  "var dataset = {\n" +
-      @data_points.map { |k, v|
-        values = []
-        v.each_with_index { |value, i| values << "[#{i}, #{value}]" }
-        "'#{k}': [#{values.join(', ')}]"
-      }.join(",\n") + "\n};\n"
-
-      options = "var options = {\n" +
+    protected
+    def options
+      "var options = {\n" +
       "padding: { #{@theme[:padding]} },\n" +
       "backgroundColor: '#{@theme[:background_color]}',\n" +
       "colorScheme: '#{@theme[:color_scheme]}',\n" +
@@ -48,21 +94,20 @@ module Drawr
         "{v:#{k}, label:'#{labels[k]}'}"
       }.join(",\n") +
       "]\n};\n"
+    end
 
-      commands = "var line = new Plotr.LineChart('#{div}', options);\n" +
+    def commands
+      "var line = new Plotr.LineChart('#{div}', options);\n" +
       "line.addDataset(dataset);\nline.render();\n"
-
-      <<END
-      <div><canvas id="#{div}" height="#{@height.to_i}" width="#{@width.to_i}"></canvas></div>
-      <script>#{dataset}\n#{options}\n#{commands}</script>
-END
     end
 
-    def write_to_div(div)
-      @div = div
-      to_s
+    def dataset
+      "var dataset = {\n" +
+      @data_points.map { |k, v|
+        values = []
+        v.each_with_index { |value, i| values << "[#{i}, #{value}]" }
+        "'#{k}': [#{values.join(', ')}]"
+      }.join(",\n") + "\n};\n"
     end
-
-    def write(file); File.open(file, 'wb') { |f| f.write to_s }; end
   end
 end
