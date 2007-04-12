@@ -42,6 +42,28 @@ module Drawr
       <script>#{dataset}\n#{options}\n#{commands}</script>
 END
     end
+
+    protected
+    def dataset
+      "var dataset = {\n" +
+      @data_points.map { |k, v|
+        values = []
+        v.each_with_index { |value, i| values << "[#{i}, #{value}]" }
+        "'#{k}': [#{values.join(', ')}]"
+      }.join(",\n") + "\n};\n"
+    end
+
+    def options
+      "var options = {\n" +
+      "padding: { #{@theme[:padding]} },\n" +
+      "backgroundColor: '#{@theme[:background_color]}',\n" +
+      "colorScheme: '#{@theme[:color_scheme]}',\n" +
+      "xTicks: [ " +
+      labels.keys.sort.map { |k|
+        "{v:#{k}, label:'#{labels[k]}'}"
+      }.join(",\n") +
+      "]\n};\n"
+    end
   end
 
   class Pie < Base
@@ -84,30 +106,17 @@ END
 
   class Line < Base
     protected
-    def options
-      "var options = {\n" +
-      "padding: { #{@theme[:padding]} },\n" +
-      "backgroundColor: '#{@theme[:background_color]}',\n" +
-      "colorScheme: '#{@theme[:color_scheme]}',\n" +
-      "xTicks: [ " +
-      labels.keys.sort.map { |k|
-        "{v:#{k}, label:'#{labels[k]}'}"
-      }.join(",\n") +
-      "]\n};\n"
-    end
-
     def commands
       "var line = new Plotr.LineChart('#{div}', options);\n" +
       "line.addDataset(dataset);\nline.render();\n"
     end
+  end
 
-    def dataset
-      "var dataset = {\n" +
-      @data_points.map { |k, v|
-        values = []
-        v.each_with_index { |value, i| values << "[#{i}, #{value}]" }
-        "'#{k}': [#{values.join(', ')}]"
-      }.join(",\n") + "\n};\n"
+  class Bar < Base
+    protected
+    def commands
+      "var line = new Plotr.BarChart('#{div}', options);\n" +
+      "line.addDataset(dataset);\nline.render();\n"
     end
   end
 end
