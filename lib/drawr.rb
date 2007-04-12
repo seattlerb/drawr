@@ -21,6 +21,7 @@ module Drawr
         :color_scheme     => 'red',
         :padding          => 'left: 30, right: 0, top: 10, bottom: 30',
       }
+      @extra_options = {}
       if target_width.is_a? String
         @width, @height = target_width.split(/x/, 2)
       else
@@ -49,24 +50,38 @@ END
       @data_points.map { |k, v|
         values = []
         v.each_with_index { |value, i| values << "[#{i}, #{value}]" }
-        "'#{k}': [#{values.join(', ')}]"
+        "'#{k.to_s.gsub(/'/,"\\\\'")}': [#{values.join(', ')}]"
       }.join(",\n") + "\n};\n"
     end
 
     def options
+      opts = @extra_options.map { |k,v| "#{k}: #{v}" }
+      opts << "padding: { #{@theme[:padding]} }"
+      opts << "backgroundColor: '#{@theme[:background_color]}'"
+      opts << "colorScheme: '#{@theme[:color_scheme]}'"
+
       "var options = {\n" +
-      "padding: { #{@theme[:padding]} },\n" +
-      "backgroundColor: '#{@theme[:background_color]}',\n" +
-      "colorScheme: '#{@theme[:color_scheme]}',\n" +
-      "xTicks: [ " +
+      opts.join(",\n") + ",\n" +
+      "xTicks: [\n" +
       labels.keys.sort.map { |k|
-        "{v:#{k}, label:'#{labels[k]}'}"
+        "{v:#{k}, label:'#{labels[k].to_s.gsub(/'/, "\\\\'")}'}"
       }.join(",\n") +
-      "]\n};\n"
+      "\n]\n};\n"
+
+    end
+
+    def commands
+      "var chart = new Plotr.#{class_name}('#{div}', options);\n" +
+      "chart.addDataset(dataset);\nchart.render();\n"
     end
   end
 
   class Pie < Base
+    def initialize(target_width = 800)
+      super(target_width)
+      @extra_options[:strokewidth] = 1
+    end
+
     def data(name, data_points = [], color = nil)
       @labels ||= {}
       @labels[@labels.length] = name
@@ -74,49 +89,31 @@ END
     end
 
     protected
-    def options
-      <<END
-  var options = {
-      strokewidth: 1,
-      backgroundColor: '#{@theme[:background_color]}',
-      colorScheme: '#{@theme[:color_scheme]}',
-      xTicks: [
-      #{labels.keys.sort.map { |k|
-        "{v:#{k}, label:'#{labels[k]}'}"
-      }.join(",\n")}
-      ]
-};
-END
-    end
-
-    def commands
-      "var pie = new Plotr.PieChart('#{div}', options);\n" +
-      "pie.addDataset(dataset);\npie.render();\n"
-    end
-
     def dataset
       <<END
   var dataset = {
-      '#{title}': [#{@labels.map { |k,v| "[#{k}, #{@data_points[v].first}]"
+      '#{title.to_s.gsub(/'/, "\\\\'")}': [#{@labels.map { |k,v| "[#{k}, #{@data_points[v].first}]"
       }.join(', ')}]
   };
 END
+    end
+
+    def class_name
+      'PieChart'
     end
   end
 
   class Line < Base
     protected
-    def commands
-      "var line = new Plotr.LineChart('#{div}', options);\n" +
-      "line.addDataset(dataset);\nline.render();\n"
+    def class_name
+      'LineChart'
     end
   end
 
   class Bar < Base
     protected
-    def commands
-      "var line = new Plotr.BarChart('#{div}', options);\n" +
-      "line.addDataset(dataset);\nline.render();\n"
+    def class_name
+      'BarChart'
     end
   end
 end
