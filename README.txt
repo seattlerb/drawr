@@ -1,32 +1,60 @@
 drawr
-    by FIX (your name)
-    FIX (url)
+    by Aaron Patterson
+    http://seattlerb.org/
 
 == DESCRIPTION:
   
-FIX (describe your package)
+This is a ruby wrapper around Plotr with a similar API to Gruff.  You can
+create graphs with a similar interface to Gruff, but offload the rendering
+to the browser!
 
 == FEATURES/PROBLEMS:
   
-* FIX (list of features or problems)
+* Needs more tests!
 
 == SYNOPSIS:
 
-  FIX (code sample of usage)
+An example in rails.  Your controller:
+
+  class GraphController < ApplicationController
+    def index
+      @drawr = Drawr::Pie.new
+      @drawr.title = "Twan"
+      @drawr.data("One", [1])
+      @drawr.data('Two', [2])
+      @drawr.data('Three', [2])
+      @drawr.data('Four', [10])
+      @drawr.data('Five', [6])
+    end
+  end
+
+Your view:
+
+  <html>
+    <head>
+      <%= javascript_include_tag 'prototype' %>
+      <%= javascript_include_tag 'excanvas' %>
+      <%= javascript_include_tag 'Plotr' %>
+    </head>
+    <body>
+      <%= @drawr %>
+    </body>
+  </html>
 
 == REQUIREMENTS:
 
-* FIX (list of requirements)
+* Plotr[http://www.solutoire.com/plotr]
 
 == INSTALL:
 
-* FIX (sudo gem install, anything else)
+* sudo gem install drawr
+* require drawr in your environment.rb
 
 == LICENSE:
 
 (The MIT License)
 
-Copyright (c) 2007 FIX
+Copyright (c) 2007 Aaron Patterson
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
