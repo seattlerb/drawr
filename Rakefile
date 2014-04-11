@@ -5,7 +5,6 @@ require 'hoe'
 require './lib/drawr.rb'
 
 Hoe.new('drawr', Drawr::VERSION) do |p|
-  p.rubyforge_name = 'seattlerb'
   p.author          = 'Aaron Patterson'
   p.email           = 'aaronp@rubyforge.org'
   p.summary         = p.paragraphs_of('README.txt', 2).join("\n\n")
